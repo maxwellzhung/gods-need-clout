@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>神明也要流量 | Gods Need Clout</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="temple-panel" aria-label="庙宇状态">
+        <div class="temple-art">
+          <img src="assets/clout-temple.svg" alt="香火小庙" />
+          <div class="temple-level">
+            <span>破庙 Lv.<b id="templeLevel">1</b></span>
+          </div>
+        </div>
+
+        <div class="title-block">
+          <p class="kicker">Gods Need Clout</p>
+          <h1>神明也要流量</h1>
+          <p>经营一座快没人拜的小庙，接现代人的离谱愿望，让落魄神明重新爆红。</p>
+        </div>
+
+        <div class="resource-grid" aria-label="资源">
+          <div>
+            <span>香火</span>
+            <strong id="incense">120</strong>
+          </div>
+          <div>
+            <span>功德</span>
+            <strong id="merit">50</strong>
+          </div>
+          <div>
+            <span>粉丝</span>
+            <strong id="fans">36</strong>
+          </div>
+          <div>
+            <span>黑红值</span>
+            <strong id="chaos">0</strong>
+          </div>
+        </div>
+
+        <div class="risk-strip">
+          <span>地府审查</span>
+          <div class="risk-meter"><i id="auditBar"></i></div>
+          <b id="audit">8%</b>
+        </div>
+
+        <div class="temple-actions">
+          <button id="refreshBtn" type="button">换一批愿望</button>
+          <button id="upgradeBtn" type="button">升级小庙</button>
+        </div>
+      </section>
+
+      <section class="board-panel" aria-label="愿望委托">
+        <header class="section-header">
+          <div>
+            <p class="kicker">今日愿望池</p>
+            <h2>刷到的现代欲望</h2>
+          </div>
+          <span id="dayLabel">甲子日 · 宜爆红</span>
+        </header>
+        <div id="wishList" class="wish-list"></div>
+      </section>
+
+      <section class="dispatch-panel" aria-label="派单">
+        <header class="section-header">
+          <div>
+            <p class="kicker">派谁去办</p>
+            <h2>神明 / 妖怪 / 法器</h2>
+          </div>
+          <span id="selectedWishLabel">未接单</span>
+        </header>
+
+        <div class="team-layout">
+          <div>
+            <h3>落魄神怪</h3>
+            <div id="spiritList" class="roster"></div>
+          </div>
+          <div>
+            <h3>随身法器</h3>
+            <div id="relicList" class="relics"></div>
+          </div>
+        </div>
+
+        <div class="five-elements" aria-label="五行阵">
+          <button class="element active" data-element="木">木</button>
+          <button class="element" data-element="火">火</button>
+          <button class="element" data-element="土">土</button>
+          <button class="element" data-element="金">金</button>
+          <button class="element" data-element="水">水</button>
+        </div>
+
+        <button id="dispatchBtn" class="primary-action" type="button">开坛接单</button>
+      </section>
+
+      <section class="result-panel" aria-label="结算">
+        <header class="section-header">
+          <div>
+            <p class="kicker">神谕截图</p>
+            <h2>香火战报</h2>
+          </div>
+          <span id="trendLabel">暂无热搜</span>
+        </header>
+        <div id="resultCard" class="result-card empty">
+          <span class="sigil">令</span>
+          <p>选一个愿望，再派神怪和法器去处理。灵验会涨香火，翻车也可能黑红。</p>
+        </div>
+        <div id="feed" class="feed"></div>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
