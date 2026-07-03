@@ -129,6 +129,35 @@ h3 {
   line-height: 1.6;
 }
 
+.release-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.release-tools span {
+  padding: 7px 9px;
+  border: 1px dashed var(--line-heavy);
+  border-radius: 8px;
+  background: rgba(255, 253, 244, 0.66);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.release-tools button {
+  min-height: 34px;
+  padding: 0 10px;
+  background: #fffdf4;
+  font-size: 13px;
+}
+
+.release-tools #reviewBtn {
+  background: var(--ink);
+  color: var(--paper-warm);
+}
+
 .resource-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1220,6 +1249,85 @@ h3 {
   line-height: 1.45;
 }
 
+.review-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(25, 23, 21, 0.52);
+}
+
+.review-modal[hidden] {
+  display: none;
+}
+
+.review-sheet {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 22px;
+  border: 2px solid var(--underworld);
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(0deg, rgba(37, 90, 80, 0.04) 0 1px, transparent 1px 24px),
+    #eef6f0;
+  box-shadow: 0 24px 80px rgba(25, 23, 21, 0.32);
+}
+
+.review-sheet .sigil {
+  color: var(--underworld);
+}
+
+.review-body {
+  display: grid;
+  gap: 10px;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.review-grid div {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.review-grid span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-grid b {
+  color: var(--underworld);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 22px;
+}
+
+.review-body p {
+  margin-bottom: 0;
+  color: #45584f;
+  line-height: 1.55;
+}
+
+.review-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.review-actions #nextDayBtn {
+  background: var(--underworld);
+  color: var(--paper-warm);
+}
+
 @media (max-width: 1260px) {
   .topbar,
   .play-layout,
@@ -1241,7 +1349,8 @@ h3 {
   .resource-strip,
   .temple-console,
   .selector-grid,
-  .delta-grid {
+  .delta-grid,
+  .review-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1278,7 +1387,9 @@ h3 {
   .staff-actions,
   .five-elements,
   .strategy-tabs,
-  .delta-grid {
+  .delta-grid,
+  .review-actions,
+  .review-grid {
     grid-template-columns: 1fr;
   }
 

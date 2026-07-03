@@ -185,6 +185,23 @@ const milestoneDefinitions = [
   { id: "share", label: "把战报复制成传播素材" }
 ];
 
+const SAVE_KEY = "gods-need-clout-save-v1";
+const SAVE_VERSION = 4;
+
+function freshMilestones() {
+  return Object.fromEntries(milestoneDefinitions.map((item) => [item.id, false]));
+}
+
+function freshDayStats() {
+  return {
+    handled: 0,
+    fulfilled: 0,
+    redirected: 0,
+    viral: 0,
+    backlash: 0
+  };
+}
+
 const state = {
   day: 0,
   templeLevel: 1,
@@ -207,12 +224,8 @@ const state = {
   festivalWon: false,
   festivalReviewed: false,
   tunedOnce: false,
-  milestones: {
-    wish: false,
-    tune: false,
-    result: false,
-    share: false
-  },
+  milestones: freshMilestones(),
+  dayStats: freshDayStats(),
   ledger: [],
   hotTopics: [
     { topic: "#灶王爷称自己不管PUA#", badge: "笑" },
@@ -296,12 +309,140 @@ function markMilestone(id) {
   if (!state.milestones[id]) state.milestones[id] = true;
 }
 
+function byCode(code) {
+  return wishes.find((wish) => wish.code === code);
+}
+
+function bySpirit(id) {
+  return spirits.find((spirit) => spirit.id === id);
+}
+
+function byRelic(id) {
+  return relics.find((relic) => relic.id === id);
+}
+
+function byEvent(name) {
+  return events.find((event) => event.name === name);
+}
+
+function saveGame() {
+  try {
+    const data = {
+      version: SAVE_VERSION,
+      savedAt: new Date().toISOString(),
+      state: {
+        day: state.day,
+        templeLevel: state.templeLevel,
+        incense: state.incense,
+        merit: state.merit,
+        fans: state.fans,
+        chaos: state.chaos,
+        audit: state.audit,
+        wishPool: state.wishPool.map((wish) => wish.code),
+        selectedWish: state.selectedWish?.code ?? null,
+        selectedSpirit: state.selectedSpirit.id,
+        selectedAssistant: state.selectedAssistant.id,
+        focusedStaff: state.focusedStaff.id,
+        selectedRelic: state.selectedRelic.id,
+        element: state.element,
+        strategy: state.strategy,
+        event: state.event?.name ?? null,
+        lastOutcome: state.lastOutcome,
+        lastTicket: state.lastTicket,
+        festivalWon: state.festivalWon,
+        festivalReviewed: state.festivalReviewed,
+        tunedOnce: state.tunedOnce,
+        milestones: state.milestones,
+        dayStats: state.dayStats,
+        ledger: state.ledger,
+        hotTopics: state.hotTopics,
+        log: state.log
+      },
+      spirits: spirits.map((spirit) => ({ id: spirit.id, bond: spirit.bond, stress: spirit.stress }))
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    $("#saveStatus").textContent = "本地存档已同步";
+  } catch {
+    $("#saveStatus").textContent = "存档不可用";
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data?.state) return false;
+    const saved = data.state;
+    state.day = saved.day ?? state.day;
+    state.templeLevel = saved.templeLevel ?? state.templeLevel;
+    state.incense = saved.incense ?? state.incense;
+    state.merit = saved.merit ?? state.merit;
+    state.fans = saved.fans ?? state.fans;
+    state.chaos = saved.chaos ?? state.chaos;
+    state.audit = saved.audit ?? state.audit;
+    state.wishPool = (saved.wishPool ?? []).map(byCode).filter(Boolean);
+    state.selectedWish = byCode(saved.selectedWish) ?? state.wishPool[0] ?? null;
+    state.selectedSpirit = bySpirit(saved.selectedSpirit) ?? spirits[0];
+    state.selectedAssistant = bySpirit(saved.selectedAssistant) ?? spirits[1];
+    state.focusedStaff = bySpirit(saved.focusedStaff) ?? state.selectedSpirit;
+    state.selectedRelic = byRelic(saved.selectedRelic) ?? relics[0];
+    state.element = saved.element ?? state.element;
+    state.strategy = strategies[saved.strategy] ? saved.strategy : "balanced";
+    state.event = byEvent(saved.event) ?? null;
+    state.lastOutcome = saved.lastOutcome ?? null;
+    state.lastTicket = saved.lastTicket ?? "";
+    state.festivalWon = Boolean(saved.festivalWon);
+    state.festivalReviewed = Boolean(saved.festivalReviewed);
+    state.tunedOnce = Boolean(saved.tunedOnce);
+    state.milestones = { ...freshMilestones(), ...(saved.milestones ?? {}) };
+    state.dayStats = { ...freshDayStats(), ...(saved.dayStats ?? {}) };
+    state.ledger = Array.isArray(saved.ledger) ? saved.ledger.slice(0, 5) : [];
+    state.hotTopics = Array.isArray(saved.hotTopics) ? saved.hotTopics.slice(0, 6) : state.hotTopics;
+    state.log = Array.isArray(saved.log) ? saved.log.slice(0, 12) : [];
+
+    (data.spirits ?? []).forEach((savedSpirit) => {
+      const spirit = bySpirit(savedSpirit.id);
+      if (!spirit) return;
+      spirit.bond = clamp(savedSpirit.bond ?? spirit.bond, 0, 20);
+      spirit.stress = clamp(savedSpirit.stress ?? spirit.stress, 0, 10);
+    });
+
+    if (!state.event) pickEvent();
+    if (!state.wishPool.length) state.wishPool = sample(wishes, 5 + Math.min(2, state.templeLevel));
+    if (!state.selectedWish) state.selectedWish = state.wishPool[0] ?? null;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearSaveAndRestart() {
+  const ok = window.confirm("要清空本地存档，重新经营东巷小庙吗？");
+  if (!ok) return;
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch {
+    // Ignore storage errors; reloading still returns the player to a clean session in-memory.
+  }
+  window.location.reload();
+}
+
 function dailyReset() {
   spirits.forEach((spirit) => {
     spirit.stress = clamp(spirit.stress - 1, 0, 10);
   });
   state.chaos = clamp(state.chaos - 3, 0, 999);
   if (state.merit >= 80) state.audit = clamp(state.audit - 2, 0, 100);
+}
+
+function resetDailyLoop() {
+  state.tunedOnce = false;
+  state.milestones = freshMilestones();
+  state.dayStats = freshDayStats();
+  state.ledger = [];
+  state.lastOutcome = null;
+  state.lastTicket = "";
 }
 
 function pickEvent() {
@@ -314,6 +455,7 @@ function refreshWishes(advance = true) {
   if (advance) {
     state.day += 1;
     dailyReset();
+    resetDailyLoop();
   } else {
     state.day = 1;
   }
@@ -507,6 +649,10 @@ function dispatchWish() {
   const outcome = createOutcome(kind, wish, spirit, assistant, relic, score);
 
   applyOutcome(outcome, spirit, assistant);
+  state.dayStats.handled += 1;
+  if (kind === "great" || kind === "ok") state.dayStats.fulfilled += 1;
+  if (kind === "viral") state.dayStats.viral += 1;
+  if (kind === "backlash") state.dayStats.backlash += 1;
   state.lastOutcome = outcome;
   state.lastTicket = buildTicket(outcome);
   state.hotTopics.unshift({ topic: outcome.trend, badge: kind === "great" ? "爆" : kind === "backlash" ? "罚" : "热" });
@@ -518,6 +664,7 @@ function dispatchWish() {
   markMilestone("result");
   recordLedger(outcome.title, before);
   render();
+  maybeOpenReview();
 }
 
 function removeWish(wish) {
@@ -538,6 +685,7 @@ function handleWishAction(wish, action) {
   if (action === "reject") {
     state.merit = clamp(state.merit + 7, 0, 999);
     state.audit = clamp(state.audit - 3, 0, 100);
+    state.dayStats.redirected += 1;
     state.log.unshift(`劝退成功：${wish.type}委托被放下，功德 +7。`);
     recordLedger("劝退愿望", before);
   }
@@ -545,6 +693,7 @@ function handleWishAction(wish, action) {
   if (action === "pool") {
     state.merit = clamp(state.merit + 10, 0, 999);
     state.incense = clamp(state.incense - 4, 0, 9999);
+    state.dayStats.redirected += 1;
     state.log.unshift(`丢进功德池：牺牲一点香火，换来一笔干净功德。`);
     recordLedger("功德池沉淀", before);
   }
@@ -552,6 +701,7 @@ function handleWishAction(wish, action) {
   if (action === "audit") {
     state.audit = clamp(state.audit - 6, 0, 100);
     state.merit = clamp(state.merit + 2, 0, 999);
+    state.dayStats.redirected += 1;
     state.log.unshift(`交给地府审核：这单先不碰，风险下降。`);
     recordLedger("地府审核", before);
   }
@@ -559,6 +709,7 @@ function handleWishAction(wish, action) {
   removeWish(wish);
   checkFestivalWin();
   render();
+  maybeOpenReview();
 }
 
 function upgradeTemple() {
@@ -698,6 +849,49 @@ function nextAction() {
     title: "进入第二轮运营",
     body: "继续接单、安抚员工、压住地府风险，看看七日庙会能不能出圈。"
   };
+}
+
+function reviewVerdict() {
+  if (state.dayStats.backlash > 0 || state.audit >= 70) return "地府已在门口徘徊，明天先降风险。";
+  if (state.dayStats.viral > 0) return "黑红流量有效，但员工和审查都需要降温。";
+  if (state.dayStats.fulfilled >= 2) return "今日灵验率不错，可以考虑扩建或冲一单热搜。";
+  if (state.dayStats.redirected >= 2) return "今天功德很干净，但香火增长偏慢。";
+  return "今日经营平稳，小庙还没倒闭就是胜利。";
+}
+
+function renderReview() {
+  const handled = state.dayStats.handled + state.dayStats.redirected;
+  $("#reviewTitle").textContent = `第 ${state.day} 日复盘`;
+  $("#reviewBody").innerHTML = `
+    <div class="review-grid">
+      <div><span>处理小票</span><b>${handled}</b></div>
+      <div><span>灵验单</span><b>${state.dayStats.fulfilled}</b></div>
+      <div><span>转功德</span><b>${state.dayStats.redirected}</b></div>
+      <div><span>翻车/反噬</span><b>${state.dayStats.viral + state.dayStats.backlash}</b></div>
+    </div>
+    <p>${reviewVerdict()}</p>
+    <p>当前香火 ${state.incense}，功德 ${state.merit}，粉丝 ${state.fans}，地府审查 ${state.audit}%。</p>
+  `;
+}
+
+function openReview() {
+  renderReview();
+  $("#reviewModal").hidden = false;
+}
+
+function closeReview() {
+  $("#reviewModal").hidden = true;
+}
+
+function advanceToNextDay() {
+  closeReview();
+  refreshWishes(true);
+  showToast("黄历翻页，下一批愿望已塞到庙门口。");
+}
+
+function maybeOpenReview() {
+  if (state.wishPool.length) return;
+  window.setTimeout(openReview, 80);
 }
 
 function templeCaption() {
@@ -891,7 +1085,14 @@ function renderResult() {
   $("#trendLabel").textContent = result?.trend ?? "暂无热搜";
   $("#shareBtn").disabled = !state.lastTicket;
   if (!result) {
+    const resultCard = $("#resultCard");
+    resultCard.className = "result-card empty";
+    resultCard.innerHTML = `
+      <span class="sigil">令</span>
+      <p>香炉还冷着，愿望小票压在签筒下。</p>
+    `;
     $("#postmortemCard").innerHTML = "";
+    $("#feed").innerHTML = state.log.slice(0, 8).map((item) => `<div class="feed-item">${item}</div>`).join("");
     return;
   }
 
@@ -1039,6 +1240,13 @@ function bindEvents() {
   $("#offerBtn").addEventListener("click", offerIncense);
   $("#talkBtn").addEventListener("click", talkToStaff);
   $("#restBtn").addEventListener("click", restStaff);
+  $("#reviewBtn").addEventListener("click", openReview);
+  $("#resetBtn").addEventListener("click", clearSaveAndRestart);
+  $("#closeReviewBtn").addEventListener("click", closeReview);
+  $("#nextDayBtn").addEventListener("click", advanceToNextDay);
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("#reviewModal").hidden) closeReview();
+  });
 }
 
 function render() {
@@ -1053,7 +1261,13 @@ function render() {
   renderNextAction();
   renderLedger();
   $("#dispatchBtn").disabled = !state.selectedWish;
+  saveGame();
 }
 
 bindEvents();
-refreshWishes(false);
+if (loadGame()) {
+  render();
+  showToast("已读取本地香火账。");
+} else {
+  refreshWishes(false);
+}

@@ -3,6 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="经营一座快倒闭的小庙，派神明、妖怪和法器处理现代人的离谱愿望。" />
+    <meta name="theme-color" content="#a6372d" />
+    <meta property="og:title" content="神明也要流量 | Gods Need Clout" />
+    <meta property="og:description" content="破旧小庙 + 现代流量后台 + 民间玄学票据系统。" />
     <title>神明也要流量 | Gods Need Clout</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -13,6 +17,11 @@
           <p class="kicker">破庙运营后台</p>
           <h1>神明也要流量</h1>
           <p>用一座快倒闭的小庙，接住现代人的荒唐愿望、流量焦虑和因果账单。</p>
+          <div class="release-tools">
+            <span id="saveStatus">本地存档待同步</span>
+            <button id="reviewBtn" type="button">今日复盘</button>
+            <button id="resetBtn" type="button">重开小庙</button>
+          </div>
         </div>
 
         <div class="resource-strip" aria-label="今日经营数据">
@@ -255,6 +264,18 @@
       </section>
     </main>
     <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+    <div id="reviewModal" class="review-modal" hidden>
+      <div class="review-sheet" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+        <span class="sigil">结</span>
+        <p class="kicker">小庙日结</p>
+        <h2 id="reviewTitle">今日复盘</h2>
+        <div id="reviewBody" class="review-body"></div>
+        <div class="review-actions">
+          <button id="closeReviewBtn" type="button">继续经营</button>
+          <button id="nextDayBtn" type="button">翻到下一日</button>
+        </div>
+      </div>
+    </div>
 
     <script src="game.js"></script>
   </body>
